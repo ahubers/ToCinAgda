@@ -2,8 +2,9 @@ module Automata.DFA where
 
 open import Preludes.Data hiding (String)
 open import Preludes.Relation
+open import Preludes.FinSets
 
-open import Data.List
+open import Data.List.Membership.Propositional
 
 --------------------------------------------------------------------------------
 -- DFAs.
@@ -11,15 +12,23 @@ open import Data.List
 record DFA : Set₁ where
   field
     Q : Set
-    ≡Q : Dec Q -- Need equivalence on Q to be decidable (see Firsov and Uustalu for business like this; may as well assert that Q is finite, too.)
-    Σ : Set -- Ditto for Σ.
-    δ : Q → Σ → Q
-    F : List Q -- With Q and Σ properly "finite sets", I should be able to assert too that F ⊆ Q in a meaningful way.
+    LQ : Listable Q
+    ≡Q : DecEq Q  -- implies membership is decidable. Is decidable equality implied by finiteness?
 
-(-- Also, while we're at it---it may be worthwhile to steal quite a lot from Firsov & Uustalu, as I am (in the theory of computation) almost exclusively considering the generation of infinite sets from tuples of finite descriptions.)
+    q₀ : Q
+
+    Σ : Set 
+    LΣ : Listable Σ
+    ≡Σ : DecEq Σ -- implies membership is decidable.
+
+    δ : Q → Σ → Q
+    F : List Q 
+
+
 open DFA
 open import Data.Bool
 
-run : (D : DFA) → List (Σ D)  → Bool
-run record { Q = Q ; ≡Q = ≡Q ; Σ = Σ ; δ = δ ; F = F } [] = any {!≡!} {!!}
-run record { Q = Q ; ≡Q = ≡Q ; Σ = Σ ; δ = δ ; F = F } (x ∷ s) = {!!}
+module Pfft (D : DFA) where
+  run : (q : Q D) → List (Σ D) → Set
+  run q [] = {!q ∈? F!}  -- Need Decidable membership check. (Which follows from Decidable equality, but I don't have the lemma on hand.)
+  run q (x ∷ xs) = run (δ D q x) xs 
